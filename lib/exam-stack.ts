@@ -13,6 +13,8 @@ import * as events from "aws-cdk-lib/aws-lambda-event-sources";
 import * as sns from "aws-cdk-lib/aws-sns";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as subs from "aws-cdk-lib/aws-sns-subscriptions";
+import { SqsSubscription, LambdaSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 export class ExamStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -105,6 +107,12 @@ export class ExamStack extends cdk.Stack {
       displayName: "Exam topic",
     });
     
+    new cdk.CfnOutput(this, "Topic1Arn", {
+      value: topic1.topicArn,
+      description: "The ARN of SNS Topic1",
+    });
+    
+
     const queueB = new sqs.Queue(this, "QueueB", {
       receiveMessageWaitTime: cdk.Duration.seconds(5),
     });
@@ -135,6 +143,26 @@ export class ExamStack extends cdk.Stack {
       },
     });
     
+
+    topic1.addSubscription(
+      new SqsSubscription(queueA)
+    );
+
+   
+    lambdaXFn.addEventSource(
+      new SqsEventSource(queueA, { batchSize: 1 })
+    );
+    queueA.grantConsumeMessages(lambdaXFn);
+
+   
+    topic1.addSubscription(
+      new LambdaSubscription(lambdaYFn)
+    );
+
+
+
+
+
   }
 }
   

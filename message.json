@@ -1,0 +1,10 @@
+{
+    "name": "Test User",
+    "address": {
+      "street": "1 Main Street",
+      "city": "Capital City",
+      "country": "France"
+    },
+    "email": "test@example.com"
+  }
+  

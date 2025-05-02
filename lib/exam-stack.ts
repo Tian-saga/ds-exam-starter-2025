@@ -118,6 +118,8 @@ export class ExamStack extends cdk.Stack {
       receiveMessageWaitTime: cdk.Duration.seconds(5),
     });
 
+    
+
     const queueA = new sqs.Queue(this, "queueA", {
       receiveMessageWaitTime: cdk.Duration.seconds(5),
     });
@@ -144,6 +146,8 @@ export class ExamStack extends cdk.Stack {
       },
     });
     
+    lambdaYFn.addEnvironment("QUEUE_B_URL", queueB.queueUrl);
+    queueB.grantSendMessages(lambdaYFn);
 
     topic1.addSubscription(new subs.SqsSubscription(queueA, {
       filterPolicy: {

@@ -70,7 +70,26 @@ export class ExamStack extends cdk.Stack {
       },
     });
 
-    const anEndpoint = api.root.addResource("patha");
+    const crew = api.root.addResource("crew");
+    const movies = crew.addResource("movies");
+    const byMovie = movies.addResource("{movieId}");
+
+    table.grantReadWriteData(question1Fn);
+
+    byMovie.addMethod(
+      "GET",
+      new apig.LambdaIntegration(question1Fn),
+      {
+        requestParameters: {
+          "method.request.querystring.role": false  // false = 可选参数
+        }
+      }
+    );
+    
+
+    //const anEndpoint = api.root.addResource("patha");
+
+
 
 
     // ==================================

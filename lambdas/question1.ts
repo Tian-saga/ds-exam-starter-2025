@@ -1,43 +1,37 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
-
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DynamoDBDocumentClient, GetCommand
+} from "@aws-sdk/lib-dynamodb";
 
-const client = createDDbDocClient();
+const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const TABLE = process.env.TABLE_NAME!;
 
-export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
-  try {
-    console.log("Event: ", JSON.stringify(event));
-
+export const handler: APIGatewayProxyHandlerV2 = async event => {
+  const movieId = Number(event.pathParameters!.movieId);
+  const role    = event.queryStringParameters?.role;
+  if (!role) {
     return {
-      statusCode: 200,
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({}),
-    };
-  } catch (error: any) {
-    console.log(JSON.stringify(error));
-    return {
-      statusCode: 500,
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ error }),
+      statusCode: 400,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "Missing role query parameter" })
     };
   }
-};
 
-function createDDbDocClient() {
-  const ddbClient = new DynamoDBClient({ region: process.env.REGION });
-  const marshallOptions = {
-    convertEmptyValues: true,
-    removeUndefinedValues: true,
-    convertClassInstanceToMap: true,
+  const { Item } = await db.send(new GetCommand({
+    TableName: TABLE,
+    Key: { movieId, role }
+  }));
+  if (!Item) {
+    return {
+      statusCode: 404,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "Not found" })
+    };
+  }
+  return {
+    statusCode: 200,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(Item)
   };
-  const unmarshallOptions = {
-    wrapNumbers: false,
-  };
-  const translateConfig = { marshallOptions, unmarshallOptions };
-  return DynamoDBDocumentClient.from(ddbClient, translateConfig);
-}
+};

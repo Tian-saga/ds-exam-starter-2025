@@ -15,6 +15,7 @@ import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as subs from "aws-cdk-lib/aws-sns-subscriptions";
 import { SqsSubscription, LambdaSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import { SubscriptionFilter } from "aws-cdk-lib/aws-sns";
 
 export class ExamStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -144,9 +145,14 @@ export class ExamStack extends cdk.Stack {
     });
     
 
-    topic1.addSubscription(
-      new SqsSubscription(queueA)
-    );
+    topic1.addSubscription(new subs.SqsSubscription(queueA, {
+      filterPolicy: {
+        country: SubscriptionFilter.stringFilter({
+          allowlist: ["Ireland", "China"]
+        })
+      }
+    }));
+    
 
    
     lambdaXFn.addEventSource(
@@ -155,10 +161,15 @@ export class ExamStack extends cdk.Stack {
     queueA.grantConsumeMessages(lambdaXFn);
 
    
-    topic1.addSubscription(
-      new LambdaSubscription(lambdaYFn)
-    );
-
+    topic1.addSubscription(new subs.LambdaSubscription(lambdaYFn, {
+      filterPolicy: {
+        country: SubscriptionFilter.stringFilter({
+          denylist: ["Ireland", "China"]
+        })
+      }
+    }));
+    
+    
 
 
 
